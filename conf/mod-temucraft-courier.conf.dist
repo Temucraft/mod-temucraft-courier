@@ -1,0 +1,30 @@
+[worldserver]
+
+########################################
+# mod-temucraft-courier
+########################################
+#
+#    Temucraft.Courier.Enable
+#        Description: .courier calls a pocket courier that follows you; talk to it for your bank or your mailbox.
+#                     Only you can use yours. Not in combat, battlegrounds, arenas or on flights.
+#        Default:     1
+
+Temucraft.Courier.Enable = 1
+
+#
+#    Temucraft.Courier.Duration
+#    Temucraft.Courier.Cooldown
+#        Description: How long the courier stays, and how long before you can call it again (seconds; GMs skip it).
+#        Default:     180, 300
+
+Temucraft.Courier.Duration = 180
+Temucraft.Courier.Cooldown = 300
+
+#
+#    Temucraft.Courier.Bank
+#    Temucraft.Courier.Mail
+#        Description: What the courier offers.
+#        Default:     1, 1
+
+Temucraft.Courier.Bank = 1
+Temucraft.Courier.Mail = 1
