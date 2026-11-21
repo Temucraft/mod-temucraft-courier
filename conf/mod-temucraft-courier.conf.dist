@@ -28,3 +28,17 @@ Temucraft.Courier.Cooldown = 300
 
 Temucraft.Courier.Bank = 1
 Temucraft.Courier.Mail = 1
+
+#
+#    Temucraft.Courier.Creature
+#        Description: Creature of the pocket courier. Must match data/sql.
+#        Default:     608400
+
+Temucraft.Courier.Creature = 608400
+
+#
+#    Temucraft.Courier.Text
+#        Description: npc_text the courier shows when talked to. Must match data/sql.
+#        Default:     608400
+
+Temucraft.Courier.Text = 608400

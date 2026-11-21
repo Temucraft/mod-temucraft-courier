@@ -23,11 +23,9 @@ using namespace Acore::ChatCommands;
 
 namespace
 {
-    constexpr uint32 NPC_COURIER = 608400;
-    constexpr uint32 TEXT_COURIER = 608400;
     enum : uint32 { ACTION_BANK = 1, ACTION_MAIL = 2 };
 
-    struct CourierSettings { bool enable = true; uint32 duration = 180; uint32 cooldown = 300; bool bank = true; bool mail = true; } ccfg;
+    struct CourierSettings { bool enable = true; uint32 duration = 180; uint32 cooldown = 300; bool bank = true; bool mail = true; uint32 creature = 608400; uint32 text = 608400; } ccfg;
     std::unordered_map<ObjectGuid, time_t> lastCall;
     std::unordered_map<ObjectGuid, ObjectGuid> courierOwner;   // courier -> player
 }
@@ -39,7 +37,7 @@ public:
 
     bool CanCreatureGossipHello(Player* player, Creature* creature) override
     {
-        if (creature->GetEntry() != NPC_COURIER)
+        if (creature->GetEntry() != ccfg.creature)
             return false;
         auto owner = courierOwner.find(creature->GetGUID());
         ClearGossipMenuFor(player);
@@ -53,13 +51,13 @@ public:
             AddGossipItemFor(player, GOSSIP_ICON_MONEY_BAG, TemucraftModuleText("mod-temucraft-courier", player, 2, "Open my bank."), GOSSIP_SENDER_MAIN, ACTION_BANK);
         if (ccfg.mail)
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, TemucraftModuleText("mod-temucraft-courier", player, 3, "Open my mailbox."), GOSSIP_SENDER_MAIN, ACTION_MAIL);
-        SendGossipMenuFor(player, TEXT_COURIER, creature->GetGUID());
+        SendGossipMenuFor(player, ccfg.text, creature->GetGUID());
         return true;
     }
 
     bool CanCreatureGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
     {
-        if (creature->GetEntry() != NPC_COURIER)
+        if (creature->GetEntry() != ccfg.creature)
             return false;
         CloseGossipMenuFor(player);
         auto owner = courierOwner.find(creature->GetGUID());
@@ -74,7 +72,7 @@ public:
 
     void OnCreatureRemoveWorld(Creature* creature) override
     {
-        if (creature->GetEntry() == NPC_COURIER)
+        if (creature->GetEntry() == ccfg.creature)
             courierOwner.erase(creature->GetGUID());
     }
 };
@@ -89,6 +87,8 @@ public:
         ccfg.enable = sConfigMgr->GetOption<bool>("Temucraft.Courier.Enable", true);
         ccfg.duration = sConfigMgr->GetOption<uint32>("Temucraft.Courier.Duration", 180);
         ccfg.cooldown = sConfigMgr->GetOption<uint32>("Temucraft.Courier.Cooldown", 300);
+        ccfg.creature = sConfigMgr->GetOption<uint32>("Temucraft.Courier.Creature", 608400);
+        ccfg.text = sConfigMgr->GetOption<uint32>("Temucraft.Courier.Text", 608400);
         ccfg.bank = sConfigMgr->GetOption<bool>("Temucraft.Courier.Bank", true);
         ccfg.mail = sConfigMgr->GetOption<bool>("Temucraft.Courier.Mail", true);
     }
@@ -127,7 +127,7 @@ public:
         }
         float x, y, z;
         player->GetClosePoint(x, y, z, player->GetObjectSize(), 2.0f, float(M_PI) / 2);
-        TempSummon* courier = player->SummonCreature(NPC_COURIER, x, y, z, player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN,
+        TempSummon* courier = player->SummonCreature(ccfg.creature, x, y, z, player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN,
                                                      ccfg.duration * IN_MILLISECONDS);
         if (!courier)
             return true;
