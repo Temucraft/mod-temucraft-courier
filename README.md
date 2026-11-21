@@ -1,6 +1,6 @@
 # mod-temucraft-courier
 
-Your bank and mailbox anywhere. `.courier` calls a Pocket Courier that follows you for 3 minutes; talk to it to open
+Your bank and mailbox anywhere. `.temucraft courier` calls a Pocket Courier that follows you for 3 minutes; talk to it to open
 your bank or your mailbox. Only the player who called it can use it; once every 5 minutes; not in combat,
 battlegrounds, arenas or on flights.
 
@@ -22,7 +22,7 @@ Curator's Helpers list (mod-temucraft-shop).
 
 | Item | Entry | What it does |
 |---|---|---|
-| Courier's Bell | 610140 | Calls your Pocket Courier, like `.courier` (same cooldown). |
+| Courier's Bell | 610140 | Calls your Pocket Courier, like `.temucraft courier` (same cooldown). |
 | Tailor's Folding Mirror | 610141 | A wardrobe mirror: mod-transmog's transmogrifier (needs mod-transmog). |
 | Artisan's Almanac | 610142 | Pick one of your professions: its trainer list, normal prices. |
 | Beastkeeper's Lantern | 610143 | A stable master (hunters). |

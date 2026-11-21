@@ -12,4 +12,5 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-temucraft-courier', 9, 'Only hunters keep a stable.'),
 ('mod-temucraft-courier', 10, 'Not ready yet: {} seconds.'),
 ('mod-temucraft-courier', 11, 'You know no profession yet.'),
-('mod-temucraft-courier', 12, 'Your helper is here for {} seconds.');
+('mod-temucraft-courier', 12, 'Your helper is here for {} seconds.'),
+('mod-temucraft-courier', 13, 'You can''t use this here.');

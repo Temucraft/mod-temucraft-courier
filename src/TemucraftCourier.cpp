@@ -1,5 +1,5 @@
 /*
- * mod-temucraft-courier: a pocket courier, your bank and mailbox anywhere. .courier calls a small helper that
+ * mod-temucraft-courier: a pocket courier, your bank and mailbox anywhere. .temucraft courier calls a small helper that
  * follows you for Temucraft.Courier.Duration seconds; talk to it to open your bank or your mailbox. Only the player
  * who called it can use it. Not in battlegrounds or arenas, not in combat; once every Temucraft.Courier.Cooldown
  * seconds.
@@ -29,6 +29,7 @@ using namespace Acore::ChatCommands;
 
 namespace
 {
+    constexpr uint32 PERM_USE_HELPERS = 102251;   // RBAC permission (db-auth SQL), linked to the player roles
     enum : uint32 { ACTION_BANK = 1, ACTION_MAIL = 2 };
 
     struct CourierSettings { bool enable = true; uint32 duration = 180; uint32 cooldown = 300; bool bank = true; bool mail = true; uint32 creature = 608400; uint32 text = 608400; } ccfg;
@@ -199,7 +200,7 @@ public:
     {
         static ChatCommandTable commandTable =
         {
-            { "courier", HandleCourier, SEC_PLAYER, Console::No },
+            { "temucraft courier", HandleCourier, 102250, Console::No },
         };
         return commandTable;
     }
@@ -254,6 +255,11 @@ public:
                 kind = i;
         if (!hcfg.enable || kind == HELPER_COUNT)
             return true;
+        if (!player->GetSession()->HasPermission(PERM_USE_HELPERS))
+        {
+            handler.SendSysMessage(T(player->GetSession(), 13, "You can't use this here."));
+            return true;
+        }
         if (kind == HELPER_BELL)
             return TemucraftCourier_Commands::CallCourier(player, &handler);
         if (!CanCallHelper(player))

@@ -5,7 +5,7 @@
 ########################################
 #
 #    Temucraft.Courier.Enable
-#        Description: .courier calls a pocket courier that follows you; talk to it for your bank or your mailbox.
+#        Description: .temucraft courier calls a pocket courier that follows you; talk to it for your bank or your mailbox.
 #                     Only you can use yours. Not in combat, battlegrounds, arenas or on flights.
 #        Default:     1
 
