@@ -29,3 +29,13 @@ Curator's Helpers list (mod-temucraft-shop).
 
 The Almanac's tutors (608410-608423) teach what one stock trainer of each profession teaches
 (`creature_default_trainer` in `mod_temucraft_courier_helpers.sql`; change the trainer ids there).
+
+## Also in this module
+
+These were separate modules; they now live here, each with its own folder under `src/`, its own config file in
+`conf/` (same file and key names as before) and its notes under `docs/`. Their SQL files kept their names, so nothing
+is applied twice. Remove the old module folders from `modules/` before building.
+
+| Was | What | Code | Notes |
+|---|---|---|---|
+| mod-temucraft-auras | cosmetic aura toys | `src/auras` | [docs/auras.md](docs/auras.md) |

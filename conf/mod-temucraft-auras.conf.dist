@@ -1,0 +1,22 @@
+[worldserver]
+
+#
+#    Temucraft.Auras.Enable
+#        Description: Cosmetic aura toys.
+#        Default:     1
+
+Temucraft.Auras.Enable = 1
+
+#
+#    Temucraft.Auras.HideInPvP
+#        Description: Hide the aura in battlegrounds and arenas (it comes back when you leave).
+#        Default:     1
+
+Temucraft.Auras.HideInPvP = 1
+
+#
+#    Temucraft.Auras.HideInCombat
+#        Description: Also hide it while in combat.
+#        Default:     0
+
+Temucraft.Auras.HideInCombat = 0
