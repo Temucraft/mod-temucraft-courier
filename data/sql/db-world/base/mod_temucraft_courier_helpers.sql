@@ -53,3 +53,11 @@ DELETE FROM `mod_temucraft_vanity_item` WHERE `item` BETWEEN @ITEM AND @ITEM+3;
 INSERT INTO `mod_temucraft_vanity_item` (`item`, `category`, `sort`) VALUES
 (@ITEM+0, 'Helpers', 0), (@ITEM+1, 'Helpers', 1), (@ITEM+2, 'Helpers', 2), (@ITEM+3, 'Helpers', 3);
 
+
+-- on the Temucraft Curator's Helpers list (vendor 608011 from mod-temucraft-shop): 150, 150, 200 and 100 tokens
+DELETE FROM `npc_vendor` WHERE `entry` = 608011 AND `item` BETWEEN @ITEM AND @ITEM+3;
+INSERT INTO `npc_vendor` (`entry`, `slot`, `item`, `maxcount`, `incrtime`, `ExtendedCost`, `VerifiedBuild`) VALUES
+(608011, 0, @ITEM+0, 0, 0, 3208, 0),
+(608011, 1, @ITEM+1, 0, 0, 3208, 0),
+(608011, 2, @ITEM+2, 0, 0, 3210, 0),
+(608011, 3, @ITEM+3, 0, 0, 3205, 0);
