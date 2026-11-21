@@ -42,3 +42,51 @@ Temucraft.Courier.Creature = 608400
 #        Default:     608400
 
 Temucraft.Courier.Text = 608400
+
+#
+#    Temucraft.Courier.Helpers.Enable
+#        Description: The portable helper items: Courier's Bell, Tailor's Folding Mirror, Artisan's Almanac and
+#                     Beastkeeper's Lantern. Each works only for the one who called it, not in combat, battlegrounds
+#                     or arenas.
+#        Default:     1
+
+Temucraft.Courier.Helpers.Enable = 1
+
+#
+#    Temucraft.Courier.Helpers.Duration
+#        Description: How long (seconds) a mirror, tutor or stable master stays.
+#        Default:     180
+
+Temucraft.Courier.Helpers.Duration = 180
+
+#
+#    Temucraft.Courier.Helpers.MirrorCooldown
+#    Temucraft.Courier.Helpers.AlmanacCooldown
+#    Temucraft.Courier.Helpers.LanternCooldown
+#        Description: Seconds between two uses of each helper (the Bell uses Temucraft.Courier.Cooldown).
+#        Default:     600, 600, 300
+
+Temucraft.Courier.Helpers.MirrorCooldown = 600
+Temucraft.Courier.Helpers.AlmanacCooldown = 600
+Temucraft.Courier.Helpers.LanternCooldown = 300
+
+#
+#    Temucraft.Courier.Helpers.Item0 .. Item3
+#        Description: Item entries of the Bell, the Mirror, the Almanac and the Lantern.
+#        Default:     610140, 610141, 610142, 610143
+
+Temucraft.Courier.Helpers.Item0 = 610140
+Temucraft.Courier.Helpers.Item1 = 610141
+Temucraft.Courier.Helpers.Item2 = 610142
+Temucraft.Courier.Helpers.Item3 = 610143
+
+#
+#    Temucraft.Courier.Helpers.MirrorCreature
+#    Temucraft.Courier.Helpers.LanternCreature
+#    Temucraft.Courier.Helpers.AlmanacFirstCreature
+#        Description: Creature entries of the mirror, the stable master and the first of the 14 profession tutors.
+#        Default:     608401, 608402, 608410
+
+Temucraft.Courier.Helpers.MirrorCreature = 608401
+Temucraft.Courier.Helpers.LanternCreature = 608402
+Temucraft.Courier.Helpers.AlmanacFirstCreature = 608410

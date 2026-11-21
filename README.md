@@ -13,3 +13,19 @@ The 6 player-facing texts (chat messages, gossip options) are in the `module_str
 module and id plus the locale (`deDE`, `esES`, `frFR`, ...). If a row is missing the English text in the code is used.
 
 Part of the Temucraft modules for AzerothCore 3.3.5a.
+
+## Portable helpers
+
+Items that call a helper for a few minutes. Each helper works only for the one who called it, not in combat,
+battlegrounds or arenas, with its own cooldown. All are in the Vanity window under "Helpers" and sold on the Temucraft
+Curator's Helpers list (mod-temucraft-shop).
+
+| Item | Entry | What it does |
+|---|---|---|
+| Courier's Bell | 610140 | Calls your Pocket Courier, like `.courier` (same cooldown). |
+| Tailor's Folding Mirror | 610141 | A wardrobe mirror: mod-transmog's transmogrifier (needs mod-transmog). |
+| Artisan's Almanac | 610142 | Pick one of your professions: its trainer list, normal prices. |
+| Beastkeeper's Lantern | 610143 | A stable master (hunters). |
+
+The Almanac's tutors (608410-608423) teach what one stock trainer of each profession teaches
+(`creature_default_trainer` in `mod_temucraft_courier_helpers.sql`; change the trainer ids there).
