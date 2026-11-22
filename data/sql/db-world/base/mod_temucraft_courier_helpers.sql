@@ -36,11 +36,13 @@ INSERT INTO `creature_template` (`entry`, `name`, `subname`, `minlevel`, `maxlev
 SELECT @ALMANAC + `n`, 'Almanac Tutor', CONCAT(`name`, ' Trainer'), 1, 1, 35, 1 | 16 | 32, 1, 1, 1, 2 | 256 | 512, 7, 2 FROM `tmp_temucraft_almanac`;
 INSERT INTO `creature_default_trainer` (`CreatureId`, `TrainerId`) SELECT @ALMANAC + `n`, `trainer` FROM `tmp_temucraft_almanac`;
 -- the look of a stock trainer of that profession
+-- (a profession without such a trainer gets no row: the column can't be NULL)
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`)
-SELECT @ALMANAC + a.`n`, 0, (SELECT m.`CreatureDisplayID` FROM `creature_default_trainer` d JOIN `creature_template_model` m ON m.`CreatureID` = d.`CreatureId`
-                             WHERE d.`TrainerId` = a.`trainer` AND d.`CreatureId` < @ALMANAC ORDER BY d.`CreatureId` LIMIT 1), 1, 1
-FROM `tmp_temucraft_almanac` a;
-DELETE FROM `creature_template_model` WHERE `CreatureID` BETWEEN @ALMANAC AND @ALMANAC+13 AND `CreatureDisplayID` IS NULL;
+SELECT * FROM (
+    SELECT @ALMANAC + a.`n` AS `id`, 0 AS `idx`, (SELECT m.`CreatureDisplayID` FROM `creature_default_trainer` d JOIN `creature_template_model` m ON m.`CreatureID` = d.`CreatureId`
+                                 WHERE d.`TrainerId` = a.`trainer` AND d.`CreatureId` < @ALMANAC ORDER BY d.`CreatureId` LIMIT 1) AS `display`, 1 AS `scale`, 1 AS `prob`
+    FROM `tmp_temucraft_almanac` a) t
+WHERE t.`display` IS NOT NULL;
 DROP TEMPORARY TABLE `tmp_temucraft_almanac`;
 
 -- the Vanity window (mod-temucraft-account-wide)
