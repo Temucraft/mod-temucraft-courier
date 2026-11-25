@@ -23,6 +23,7 @@
 #include "ScriptedGossip.h"
 #include "TemporarySummon.h"
 #include "WorldSession.h"
+#include <mutex>
 #include <unordered_map>
 
 using namespace Acore::ChatCommands;
@@ -33,8 +34,18 @@ namespace
     enum : uint32 { ACTION_BANK = 1, ACTION_MAIL = 2 };
 
     struct CourierSettings { bool enable = true; uint32 duration = 180; uint32 cooldown = 300; bool bank = true; bool mail = true; uint32 creature = 608400; uint32 text = 608400; } ccfg;
+    // Cooldowns per player. Written from the command (world thread) and from item use (map threads, several at once):
+    // every access goes through CooldownGet / CooldownSet / PruneCooldowns under cooldownLock.
+    std::mutex cooldownLock;
     std::unordered_map<ObjectGuid, time_t> lastCall;
-    std::unordered_map<ObjectGuid, ObjectGuid> courierOwner;   // courier and helpers -> player
+
+    // The courier and helpers are TempSummons of their player: the owner is the summoner (no global map keyed by the
+    // summon's guid, which repeats across maps and instance copies).
+    bool OwnedBy(Creature* creature, Player* player)
+    {
+        TempSummon* summon = creature->ToTempSummon();
+        return summon && summon->GetSummonerGUID() == player->GetGUID();
+    }
 
     char const* T(WorldSession* s, uint32 id, char const* fb) { return TemucraftModuleText("mod-temucraft-courier", s, id, fb); }
 
@@ -48,7 +59,20 @@ namespace
         uint32 duration = 180;
         uint32 mirror = 608401, lantern = 608402, almanacFirst = 608410;
     } hcfg;
-    std::unordered_map<ObjectGuid, time_t> helperLast[HELPER_COUNT];
+    std::unordered_map<ObjectGuid, time_t> helperLast[HELPER_COUNT];   // under cooldownLock
+
+    time_t CooldownGet(std::unordered_map<ObjectGuid, time_t> const& from, ObjectGuid player)
+    {
+        std::lock_guard<std::mutex> guard(cooldownLock);
+        auto it = from.find(player);
+        return it == from.end() ? 0 : it->second;
+    }
+
+    void CooldownSet(std::unordered_map<ObjectGuid, time_t>& to, ObjectGuid player, time_t when)
+    {
+        std::lock_guard<std::mutex> guard(cooldownLock);
+        to[player] = when;
+    }
     constexpr uint32 ALMANAC_MENU = 608420;
 
     // Artisan's Almanac: profession skill -> offset of its trainer creature (almanacFirst + offset)
@@ -75,7 +99,6 @@ namespace
         TempSummon* helper = player->SummonCreature(entry, x, y, z, player->GetAngle(x, y) + float(M_PI), TEMPSUMMON_TIMED_DESPAWN, hcfg.duration * IN_MILLISECONDS);
         if (!helper)
             return nullptr;
-        courierOwner[helper->GetGUID()] = player->GetGUID();
         helper->SetFacingToObject(player);
         return helper;
     }
@@ -83,6 +106,7 @@ namespace
     // drops cooldowns that ran out, so the maps stay small
     void PruneCooldowns(time_t now)
     {
+        std::lock_guard<std::mutex> guard(cooldownLock);
         for (uint8 k = 0; k < HELPER_COUNT; ++k)
             for (auto it = helperLast[k].begin(); it != helperLast[k].end();)
                 it = now - it->second >= time_t(hcfg.cooldown[k]) ? helperLast[k].erase(it) : std::next(it);
@@ -105,8 +129,7 @@ public:
     {
         if (IsHelper(creature->GetEntry()))
         {
-            auto owner = courierOwner.find(creature->GetGUID());
-            if (owner != courierOwner.end() && owner->second == player->GetGUID())
+            if (OwnedBy(creature, player))
             {
                 if (creature->GetEntry() == hcfg.lantern)
                 {
@@ -126,9 +149,8 @@ public:
         }
         if (creature->GetEntry() != ccfg.creature)
             return false;
-        auto owner = courierOwner.find(creature->GetGUID());
         ClearGossipMenuFor(player);
-        if (owner == courierOwner.end() || owner->second != player->GetGUID())
+        if (!OwnedBy(creature, player))
         {
             CloseGossipMenuFor(player);
             ChatHandler(player->GetSession()).SendSysMessage(TemucraftModuleText("mod-temucraft-courier", player->GetSession(), 1, "This courier works for someone else."));
@@ -147,20 +169,13 @@ public:
         if (creature->GetEntry() != ccfg.creature)
             return false;
         CloseGossipMenuFor(player);
-        auto owner = courierOwner.find(creature->GetGUID());
-        if (owner == courierOwner.end() || owner->second != player->GetGUID())
+        if (!OwnedBy(creature, player))
             return true;
         if (action == ACTION_BANK && ccfg.bank)
             player->GetSession()->SendShowBank(creature->GetGUID());
         else if (action == ACTION_MAIL && ccfg.mail)
             player->GetSession()->SendShowMailBox(creature->GetGUID());
         return true;
-    }
-
-    void OnCreatureRemoveWorld(Creature* creature) override
-    {
-        if (creature->GetEntry() == ccfg.creature || IsHelper(creature->GetEntry()))
-            courierOwner.erase(creature->GetGUID());
     }
 };
 
@@ -220,7 +235,7 @@ public:
             return true;
         }
         time_t now = GameTime::GetGameTime().count();
-        auto& last = lastCall[player->GetGUID()];
+        time_t const last = CooldownGet(lastCall, player->GetGUID());
         if (!player->IsGameMaster() && last && now - last < time_t(ccfg.cooldown))
         {
             handler->PSendSysMessage(TemucraftModuleText("mod-temucraft-courier", handler, 5, "Your courier is on another errand: {} seconds."), ccfg.cooldown - uint32(now - last));
@@ -232,8 +247,7 @@ public:
                                                      ccfg.duration * IN_MILLISECONDS);
         if (!courier)
             return true;
-        last = now;
-        courierOwner[courier->GetGUID()] = player->GetGUID();
+        CooldownSet(lastCall, player->GetGUID(), now);
         courier->GetMotionMaster()->MoveFollow(player, 2.0f, float(M_PI) / 2);
         handler->PSendSysMessage(TemucraftModuleText("mod-temucraft-courier", handler, 6, "Your courier is here for {} seconds: talk to it for your bank or your mail."), ccfg.duration);
         return true;
@@ -274,7 +288,7 @@ public:
         }
         time_t now = GameTime::GetGameTime().count();
         PruneCooldowns(now);
-        time_t& last = helperLast[kind][player->GetGUID()];
+        time_t const last = CooldownGet(helperLast[kind], player->GetGUID());
         if (!player->IsGameMaster() && last && now - last < time_t(hcfg.cooldown[kind]))
         {
             handler.PSendSysMessage(T(player->GetSession(), 10, "Not ready yet: {} seconds."), hcfg.cooldown[kind] - uint32(now - last));
@@ -301,7 +315,7 @@ public:
         }
         if (SummonHelper(player, kind == HELPER_MIRROR ? hcfg.mirror : hcfg.lantern))
         {
-            last = now;
+            CooldownSet(helperLast[kind], player->GetGUID(), now);
             handler.PSendSysMessage(T(player->GetSession(), 12, "Your helper is here for {} seconds."), hcfg.duration);
         }
         return true;
@@ -322,12 +336,13 @@ public:
         if (!action || action > std::size(PROFESSIONS) || !player->HasSkill(PROFESSIONS[action - 1].skill) || !CanCallHelper(player))
             return;
         time_t now = GameTime::GetGameTime().count();
-        time_t& last = helperLast[HELPER_ALMANAC][player->GetGUID()];
+        time_t const last = CooldownGet(helperLast[HELPER_ALMANAC], player->GetGUID());
         if (!player->IsGameMaster() && last && now - last < time_t(hcfg.cooldown[HELPER_ALMANAC]))
             return;
         if (Creature* trainer = SummonHelper(player, hcfg.almanacFirst + action - 1))
         {
-            last = now;
+            CooldownSet(helperLast[HELPER_ALMANAC], player->GetGUID(), now);
+
             player->GetSession()->SendTrainerList(trainer);
         }
     }

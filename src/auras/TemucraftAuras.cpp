@@ -19,6 +19,7 @@
 #include "WorldSession.h"
 #include "SpellAuras.h"
 #include "TemucraftModuleText.h"
+#include <mutex>
 #include <unordered_map>
 
 namespace
@@ -44,7 +45,26 @@ namespace
         { 610135, 36178 }, { 610136, 12898 }, { 610137, 51444 },
     };
 
-    std::unordered_map<ObjectGuid::LowType, uint32> chosen;   // player -> aura spell (0 = none)
+    // player -> aura spell (0 = none). Written from item use and read from player hooks on map threads (several at
+    // once): only through Chosen() / SetChosen(), under chosenLock.
+    std::mutex chosenLock;
+    std::unordered_map<ObjectGuid::LowType, uint32> chosen;
+
+    uint32 Chosen(ObjectGuid::LowType guid)
+    {
+        std::lock_guard<std::mutex> guard(chosenLock);
+        auto it = chosen.find(guid);
+        return it == chosen.end() ? 0 : it->second;
+    }
+
+    void SetChosen(ObjectGuid::LowType guid, uint32 spell)
+    {
+        std::lock_guard<std::mutex> guard(chosenLock);
+        if (spell)
+            chosen[guid] = spell;
+        else
+            chosen.erase(guid);
+    }
 
     char const* T(Player* p, uint32 id, char const* fb) { return TemucraftModuleText(MODULE, p, id, fb); }
 
@@ -80,8 +100,7 @@ namespace
     {
         if (!player || !player->IsInWorld())
             return;
-        auto it = chosen.find(player->GetGUID().GetCounter());
-        uint32 spell = (cfg.enable && it != chosen.end()) ? it->second : 0;
+        uint32 spell = cfg.enable ? Chosen(player->GetGUID().GetCounter()) : 0;
         if (!spell || Hidden(player))
         {
             ClearAll(player);
@@ -99,14 +118,13 @@ namespace
     void Save(Player* player, uint32 spell)
     {
         uint32 guid = player->GetGUID().GetCounter();
+        SetChosen(guid, spell);
         if (spell)
         {
-            chosen[guid] = spell;
             CharacterDatabase.Execute("REPLACE INTO `mod_temucraft_character_setting` (`guid`, `setting`, `value`) VALUES ({}, 'auras', {})", guid, spell);
         }
         else
         {
-            chosen.erase(guid);
             CharacterDatabase.Execute("DELETE FROM `mod_temucraft_character_setting` WHERE `guid` = {} AND `setting` = 'auras'", guid);
         }
     }
@@ -120,17 +138,17 @@ public:
     void OnPlayerLogin(Player* player) override
     {
         uint32 guid = player->GetGUID().GetCounter();
-        chosen.erase(guid);
+        SetChosen(guid, 0);
         if (QueryResult result = CharacterDatabase.Query("SELECT `value` FROM `mod_temucraft_character_setting` WHERE `guid` = {} AND `setting` = 'auras'", guid))
         {
             uint32 spell = uint32((*result)[0].Get<int32>());
             if (IsOurAura(spell))
-                chosen[guid] = spell;
+                SetChosen(guid, spell);
         }
         Refresh(player);
     }
 
-    void OnPlayerLogout(Player* player) override { chosen.erase(player->GetGUID().GetCounter()); }
+    void OnPlayerLogout(Player* player) override { SetChosen(player->GetGUID().GetCounter(), 0); }
     void OnPlayerMapChanged(Player* player) override { Refresh(player); }
     void OnPlayerResurrect(Player* player, float /*restore*/, bool& /*sickness*/) override { Refresh(player); }
     void OnPlayerRemoveFromBattleground(Player* player, Battleground* /*bg*/) override { Refresh(player); }
@@ -165,8 +183,8 @@ public:
             handler.SendSysMessage(T(player, 4, "You can't use this here."));
             return true;
         }
-        auto it = chosen.find(player->GetGUID().GetCounter());
-        if (it != chosen.end() && it->second == entry->second)
+        if (Chosen(player->GetGUID().GetCounter()) == entry->second)
+
         {
             Save(player, 0);
             Refresh(player);
