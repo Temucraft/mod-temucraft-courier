@@ -2,12 +2,15 @@
 -- default: linked to the administrator roles 192 and 1014. To give one to players, link it to 195 and 1010 here (or
 -- grant it per account with .rbac account grant <account> <id>). "Temucraft: use ..." permissions are not
 -- commands: they stay linked to the player roles so the items keep working.
-DELETE FROM `rbac_linked_permissions` WHERE `linkedId` BETWEEN 102250 AND 102299;
-DELETE FROM `rbac_permissions` WHERE `id` BETWEEN 102250 AND 102299;
+-- Re-runnable without touching other roles' links (role 1000 on the PTR, links an admin added by hand): the permissions are
+-- updated in place (deleting them would cascade to every link to them), only unused ids in the range are removed, and the
+-- links below are added if missing.
+DELETE FROM `rbac_permissions` WHERE `id` BETWEEN 102252 AND 102299;
 INSERT INTO `rbac_permissions` (`id`, `name`) VALUES
 (102250, 'Command: temucraft courier'),
-(102251, 'Temucraft: use the helper items (Bell, Mirror, Almanac, Lantern)');
-INSERT INTO `rbac_linked_permissions` (`id`, `linkedId`) VALUES
+(102251, 'Temucraft: use the helper items (Bell, Mirror, Almanac, Lantern)')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+INSERT IGNORE INTO `rbac_linked_permissions` (`id`, `linkedId`) VALUES
 (192, 102250),
 (1014, 102250),
 (195, 102251),
