@@ -213,9 +213,24 @@ public:
     }
 };
 
+// a deleted character's chosen aura (mod_temucraft_character_setting 'auras') goes with it
+// OnPlayerDeleteFromDB: only when the character is really removed (not a CharDelete.Method = 1 unlink, which can be
+// restored), and in the same transaction as the core's own deletes.
+class TemucraftAuras_Delete : public PlayerScript
+{
+public:
+    TemucraftAuras_Delete() : PlayerScript("TemucraftAuras_Delete", { PLAYERHOOK_ON_DELETE_FROM_DB }) { }
+
+    void OnPlayerDeleteFromDB(CharacterDatabaseTransaction trans, uint32 guid) override
+    {
+        trans->Append("DELETE FROM `mod_temucraft_character_setting` WHERE `guid` = {} AND `setting` = 'auras'", guid);
+    }
+};
+
 void AddTemucraftAurasScripts()
 {
     new TemucraftAuras_Player();
     new item_temucraft_aura();
     new TemucraftAuras_World();
+    new TemucraftAuras_Delete();
 }
