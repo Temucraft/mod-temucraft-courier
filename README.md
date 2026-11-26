@@ -39,3 +39,5 @@ is applied twice. Remove the old module folders from `modules/` before building.
 | Was | What | Code | Notes |
 |---|---|---|---|
 | mod-temucraft-auras | cosmetic aura toys | `src/auras` | [docs/auras.md](docs/auras.md) |
+
+A character deleted for good (`OnPlayerDeleteFromDB`, in the same transaction as the core's own deletes; not a `CharDelete.Method = 1` unlink, which can be restored) takes its chosen aura (the `auras` row of `mod_temucraft_character_setting`) with it. `data/sql/db-characters/base/mod_temucraft_auras_character_cleanup.sql` removes those rows of characters deleted before; it is safe to run again.
